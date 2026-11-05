@@ -16,4 +16,4 @@ jobs:
           sonar-organization: ransomleak
           sonar-project-key: ransomleak_secure-coding-sonar-test
           sonar-wait-timeout: '600'
-          sonar-include-hotspots: 'false'
+          sonar-include-hotspots: 'true'
