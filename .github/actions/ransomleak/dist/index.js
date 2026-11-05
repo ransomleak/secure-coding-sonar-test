@@ -24399,8 +24399,7 @@ async function pollForPullRequest(cfg, timeoutSec) {
     try {
       return await fetchNewVulnerabilityCount(cfg);
     } catch (error) {
-      if (!(error instanceof SonarError) || error.kind !== "no-pr" || Date.now() + 5e3 > deadline)
-        throw error;
+      if (!(error instanceof SonarError) || error.kind !== "no-pr" || Date.now() + 5e3 > deadline) throw error;
     }
     await sleep(5e3);
   }
@@ -24411,17 +24410,12 @@ async function readSonarFindings(cfg, opts) {
     if (taskId) {
       await waitForAnalysis(cfg, taskId, opts.waitTimeoutSec);
     } else {
-      opts.log(
-        "No SonarQube report-task.txt found, so the Action reads the latest analysis without waiting."
-      );
+      opts.log("No SonarQube report-task.txt found, so the Action reads the latest analysis without waiting.");
     }
     const expectedNew = taskId || !isSonarCloud(cfg.hostUrl) ? await fetchNewVulnerabilityCount(cfg) : await pollForPullRequest(cfg, opts.waitTimeoutSec);
     const issues = await fetchPrIssues(cfg, expectedNew);
     const hotspots = opts.includeHotspots ? await fetchHotspots(cfg) : [];
-    const standards = await fetchRuleStandards(
-      cfg,
-      ruleKeysOf(issues, hotspots)
-    );
+    const standards = await fetchRuleStandards(cfg, ruleKeysOf(issues, hotspots));
     return { findings: sonarFindings(issues, hotspots, standards) };
   } catch (error) {
     if (!(error instanceof SonarError)) {
