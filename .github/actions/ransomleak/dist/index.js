@@ -24392,18 +24392,36 @@ function sonarFindings(issues, hotspots, ruleStandards) {
 // src/sonar-source.ts
 var SONAR_TOKEN_MESSAGE = "RansomLeak: could not read issues from SonarQube. The token needs Browse permission on the project (use a user token on Server, or a personal or scoped organization token on SonarQube Cloud). No lessons were posted.";
 var SONAR_NO_PR_MESSAGE = "RansomLeak: SonarQube has no pull request analysis for this pull request. Community Build does not analyse pull requests. Use the sarif input instead. No lessons were posted.";
+async function pollForPullRequest(cfg, timeoutSec) {
+  const sleep = cfg.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
+  const deadline = Date.now() + timeoutSec * 1e3;
+  for (; ; ) {
+    try {
+      return await fetchNewVulnerabilityCount(cfg);
+    } catch (error) {
+      if (!(error instanceof SonarError) || error.kind !== "no-pr" || Date.now() + 5e3 > deadline)
+        throw error;
+    }
+    await sleep(5e3);
+  }
+}
 async function readSonarFindings(cfg, opts) {
   try {
     const taskId = opts.reportTask === null ? null : parseReportTask(opts.reportTask);
     if (taskId) {
       await waitForAnalysis(cfg, taskId, opts.waitTimeoutSec);
     } else {
-      opts.log("No SonarQube report-task.txt found, so the Action reads the latest analysis without waiting.");
+      opts.log(
+        "No SonarQube report-task.txt found, so the Action reads the latest analysis without waiting."
+      );
     }
-    const expectedNew = await fetchNewVulnerabilityCount(cfg);
+    const expectedNew = taskId || !isSonarCloud(cfg.hostUrl) ? await fetchNewVulnerabilityCount(cfg) : await pollForPullRequest(cfg, opts.waitTimeoutSec);
     const issues = await fetchPrIssues(cfg, expectedNew);
     const hotspots = opts.includeHotspots ? await fetchHotspots(cfg) : [];
-    const standards = await fetchRuleStandards(cfg, ruleKeysOf(issues, hotspots));
+    const standards = await fetchRuleStandards(
+      cfg,
+      ruleKeysOf(issues, hotspots)
+    );
     return { findings: sonarFindings(issues, hotspots, standards) };
   } catch (error) {
     if (!(error instanceof SonarError)) {
