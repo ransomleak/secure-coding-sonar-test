@@ -13,6 +13,6 @@ jobs:
         with:
           sonar-host-url: https://sonarcloud.io
           sonar-organization: ransomleak
-          sonar-project-key: ransomleak_wrong-key-xyz
-          sonar-wait-timeout: '20'
+          sonar-project-key: ransomleak_secure-coding-sonar-test
+          sonar-wait-timeout: '600'
           sonar-include-hotspots: 'false'

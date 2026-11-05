@@ -24391,6 +24391,7 @@ function sonarFindings(issues, hotspots, ruleStandards) {
 
 // src/sonar-source.ts
 var SONAR_TOKEN_MESSAGE = "RansomLeak: could not read issues from SonarQube. The token needs Browse permission on the project (use a user token on Server, or a personal or scoped organization token on SonarQube Cloud). No lessons were posted.";
+var SONAR_CLOUD_NO_PR_MESSAGE = "RansomLeak: SonarQube Cloud has not analysed this pull request yet. Check that Automatic Analysis or your CI scan is enabled and has run, or raise sonar-wait-timeout. No lessons were posted.";
 var SONAR_NO_PR_MESSAGE = "RansomLeak: SonarQube has no pull request analysis for this pull request. Community Build does not analyse pull requests. Use the sarif input instead. No lessons were posted.";
 async function pollForPullRequest(cfg, timeoutSec) {
   const sleep = cfg.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
@@ -24427,7 +24428,7 @@ async function readSonarFindings(cfg, opts) {
       case "auth":
         return { skip: SONAR_TOKEN_MESSAGE };
       case "no-pr":
-        return { skip: SONAR_NO_PR_MESSAGE };
+        return { skip: isSonarCloud(cfg.hostUrl) ? SONAR_CLOUD_NO_PR_MESSAGE : SONAR_NO_PR_MESSAGE };
       case "timeout":
         return {
           skip: `RansomLeak: the SonarQube analysis did not finish within ${opts.waitTimeoutSec} seconds. No lessons were posted.`
