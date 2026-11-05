@@ -24162,7 +24162,8 @@ async function get(cfg, path, params) {
   try {
     res = await doFetch(url, {
       headers: {
-        Authorization: `Bearer ${cfg.token}`,
+        // Public SonarQube Cloud projects can be read anonymously, so an empty token sends no credential.
+        ...cfg.token ? { Authorization: `Bearer ${cfg.token}` } : {},
         Accept: "application/json"
       },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -24558,8 +24559,8 @@ async function readSonar(rawHost, pullNumber) {
     core.warning("`sonar-host-url` is not an http or https URL. Skipping.");
     return null;
   }
-  if (!token || !projectKey) {
-    core.warning("The Sonar source needs `sonar-token` and `sonar-project-key`. Skipping.");
+  if (!projectKey) {
+    core.warning("The Sonar source needs `sonar-project-key`. Skipping.");
     return null;
   }
   if (!organization && isSonarCloud(hostUrl)) {
