@@ -1,0 +1,19 @@
+name: secure-coding
+on:
+  pull_request:
+permissions:
+  pull-requests: write
+  contents: read
+  id-token: write
+jobs:
+  lessons:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/ransomleak
+        with:
+          sonar-host-url: https://sonarcloud.io
+          sonar-organization: ransomleak
+          sonar-project-key: ransomleak_secure-coding-sonar-test
+          sonar-wait-timeout: '600'
+          sonar-include-hotspots: 'true'
